@@ -1,3 +1,5 @@
+# LOLILOLsdfn
+
 # ===== Section donnees =====
 .data 
     grille:     .space 100 #Grille de char de 10x10 soit 100 octet
