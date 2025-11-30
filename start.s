@@ -1,7 +1,8 @@
 # ===== Section donnees =====
 .data 
     grille:     .space 100 #Grille de char de 10x10 soit 100 octet
-    
+    debug:	.asciiz "debug"
+    espace:	.asciiz ' '
 # ===== Section code =====  
 .text
 
@@ -61,6 +62,22 @@ initGrille:
     end_initGrille:
         jr $ra
 
+# ----- Fonction displaySpace -----
+# Objectif : Affiche la grille avec les indicateur de coordonnées
+# Registres utilises :$v0, $a0, $t8
+displaySpace:
+	add     $sp, $sp, -4        # Sauvegarde de la reference du dernier jump
+	sw      $t8, 0($sp)
+	
+	la $a0,espace	# on charge le charactère a afficher
+	li $v0,11	# on charge la valeur de la fonction afficher_char
+	syscall 	# on utilise afficher_str pour afficher $a0
+	
+	lw $t8,0($sp)
+	add $sp,$sp,4
+	jr $ra
+
+
 # ----- Fonction displayGrille -----
 # Objectif : Affiche la grille avec les indicateur de coordonnées
 # Registres utilises : $t[0-3], $v0, $a[0-1]
@@ -68,7 +85,9 @@ initGrille:
 displayGrille:
     add     $sp, $sp, -4        # Sauvegarde de la reference du dernier jump
     sw      $ra, 0($sp)
-    
+    jal	    displaySpace
+    jal	    displaySpace
+    jal     displayLettres
     la      $t0, grille     #Charge l'adresse de la grille dans $t0
     li      $t1, 0          #Initialisation du compteur de boucle dans $t1
     boucle_displayGrille:
@@ -92,7 +111,16 @@ displayGrille:
 # Regitres utilises : $t0, $v0, $a0
 
 displayLettres:
-
+	li $t0,0	# initialise un initiateur a 0
+	boucle_alphabet:
+		bge $t0, 10,fin_boucle	# si l'interateur atteint 10 , on arrète d'afficher des lettres
+			addi $a0,$t0,65	# on ajoute 65 a l'itérateur pour afficher les lettes de A a J
+			li $v0,11	# on charge la valeur de la fonction afficher_char
+			syscall 	# on utilise afficher_str pour afficher $a0
+			addi $t0,$t0,1	# on augmente l'iterateur de 1
+			j boucle_alphabet	# on boucle
+		fin_boucle:	
+	jr $ra
 # ----- Fonction addNewLine -----  
 # Objectif : fait un retour a la ligne a l'ecran
 # Registres utilises : $v0, $a0
@@ -133,6 +161,7 @@ getModulo:
     add     $sp, $sp, 4
     jr $ra
 
+
 # ----- Fonction getAleatoire ----- 
 # Objectif : Génère un nombre aléatoire de 0 à n-1
 #   $a1 represente la valeur max-1
@@ -147,7 +176,7 @@ getAleatoire:
 # ----- Fontion setShip -----
 # Objectif : place un bateau de taille donné.
 #   $a0 represente la taille en nombre de case du bateau à placer
-#   $a1 represente le caraètre pour représenter le bateau
+#   $a1 represente le caractère pour représenter le bateau
 # Registres utilises : $a0, $a1, $s[0-4], $t[0-4]
 
 setShip:
