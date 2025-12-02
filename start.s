@@ -2,7 +2,6 @@
 .data 
     grille:     .space 100 #Grille de char de 10x10 soit 100 octet
     debug:	.asciiz "debug"
-    espace:	.asciiz " "
 # ===== Section code =====  
 .text
 
@@ -10,7 +9,6 @@
 main:
     #jal initPartie
     #jal displayGrille
-    jal displayLettres
     #jal simulationJeu
     #jal displayGrille
     j   exit 
@@ -70,7 +68,7 @@ displaySpace:
 	add     $sp, $sp, -4        # Sauvegarde de la reference du dernier jump
 	sw      $t8, 0($sp)
 	
-	la $a0,espace	# on charge le charactère a afficher
+	li $a0, 32	# on charge le charactère a afficher
 	li $v0,11	# on charge la valeur de la fonction afficher_char
 	syscall 	# on utilise afficher_str pour afficher $a0
 	
