@@ -137,6 +137,7 @@ addNewLine:
 
 addLineCount:
 	
+	
 # ----- Fonction getModulo ----- 
 # Objectif : Fait le modulo (a mod b)
 #   $a0 represente le nombre a (doit etre positif)
