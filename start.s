@@ -2,14 +2,15 @@
 .data 
     grille:     .space 100 #Grille de char de 10x10 soit 100 octet
     debug:	.asciiz "debug"
-    espace:	.asciiz ' '
+    espace:	.asciiz " "
 # ===== Section code =====  
 .text
 
 # ----- Main ----- 
 main:
-    jal initPartie
-    jal displayGrille
+    #jal initPartie
+    #jal displayGrille
+    jal displayLettres
     #jal simulationJeu
     #jal displayGrille
     j   exit 
@@ -111,16 +112,16 @@ displayGrille:
 # Regitres utilises : $t0, $v0, $a0
 
 displayLettres:
-	li $t0,0	# initialise un initiateur a 0
+	li $t0,0	# initialise un iterateur a 0
 	boucle_alphabet:
-		bge $t0, 10,fin_boucle	# si l'interateur atteint 10 , on arrète d'afficher des lettres
-			addi $a0,$t0,65	# on ajoute 65 a l'itérateur pour afficher les lettes de A a J
+		bge $t0, 10,fin_boucle	# si l'iterateur atteint 10 , on arrète d'afficher des lettres
+			addi $a0,$t0,65	# on ajoute 65 a l'itérateur pour afficher les lettres de A a J
 			li $v0,11	# on charge la valeur de la fonction afficher_char
 			syscall 	# on utilise afficher_str pour afficher $a0
 			addi $t0,$t0,1	# on augmente l'iterateur de 1
 			j boucle_alphabet	# on boucle
-		fin_boucle:	
-	jr $ra
+	fin_boucle:	
+		jr $ra
 # ----- Fonction addNewLine -----  
 # Objectif : fait un retour a la ligne a l'ecran
 # Registres utilises : $v0, $a0
@@ -137,7 +138,7 @@ addNewLine:
 # Paramètre : $a1 (Ligne en cours : res du modulo + 1)
 
 addLineCount:
-
+	
 # ----- Fonction getModulo ----- 
 # Objectif : Fait le modulo (a mod b)
 #   $a0 represente le nombre a (doit etre positif)
