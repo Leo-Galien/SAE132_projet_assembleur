@@ -7,8 +7,8 @@
 
 # ----- Main ----- 
 main:
-    #jal initPartie
-    #jal displayGrille
+    jal initPartie
+    jal displayGrille
     #jal simulationJeu
     #jal displayGrille
     j   exit 
