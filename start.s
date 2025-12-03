@@ -7,7 +7,7 @@
 
 # ----- Main ----- 
 main:
-    jal initPartie
+    #jal initPartie
     jal displayGrille
     #jal simulationJeu
     #jal displayGrille
@@ -116,6 +116,7 @@ displayLettres:
 			addi $a0,$t0,65	# on ajoute 65 a l'itérateur pour afficher les lettres de A a J
 			li $v0,11	# on charge la valeur de la fonction afficher_char
 			syscall 	# on utilise afficher_str pour afficher $a0
+			jal displaySpace# on affiche un espace pour aérer
 			addi $t0,$t0,1	# on augmente l'iterateur de 1
 			j boucle_alphabet	# on boucle
 	fin_boucle:	
