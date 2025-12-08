@@ -8,6 +8,7 @@
 # ----- Main ----- 
 main:
     #jal initPartie
+    jal initGrille
     jal displayGrille
     jal displayLettres
     #jal simulationJeu
@@ -102,26 +103,33 @@ displayGrille:
         j boucle_displayGrille
     end_displayGrille:
         jal     addNewLine
+        jal     addLineCount
         lw      $ra, 0($sp)                 # On recharge la reference 
         add     $sp, $sp, 4                 # du dernier jump
     jr $ra
 
 # ----- Fonction displayLettres -----
-# Objectif : afficher les lettres de A à J
-# Regitres utilises : $t0, $v0, $a0
-
+# Objectif : Affiche les lettres de A à J
+# Registres utilisés : $t0, $v0, $a0
 displayLettres:
-	li $t0,0	# initialise un iterateur a 0
-	boucle_alphabet:
-		bge $t0, 10,fin_boucle	# si l'iterateur atteint 10 , on arrète d'afficher des lettres
-			addi $a0,$t0,65	# on ajoute 65 a l'itérateur pour afficher les lettres de A a J
-			li $v0,11	# on charge la valeur de la fonction afficher_char
-			syscall 	# on utilise afficher_str pour afficher $a0
-			jal displaySpace# on affiche un espace pour aérer
-			addi $t0,$t0,1	# on augmente l'iterateur de 1
-			j boucle_alphabet	# on boucle
-	fin_boucle:	
-		jr $ra
+    li $t0, 0                 # Initialise l'itérateur à 0
+    add     $sp, $sp, -4        # Sauvegarde de la reference du dernier jump
+    sw      $ra, 0($sp)
+
+boucle_alphabet:
+    bge $t0, 10, fin_boucle   # Si $t0 >= 10, saute à fin_boucle
+    addi $a0, $t0, 65        # $a0 = 'A' + $t0 (65 = 'A' en ASCII)
+    li $v0, 11               # Appel système pour afficher un caractère
+    syscall                  # Affiche le caractère
+    jal displaySpace         # Affiche un espace
+    addi $t0, $t0, 1         # Incrémente l'itérateur
+    j boucle_alphabet        # Retour au début de la boucle
+
+fin_boucle:
+    lw      $ra, 0($sp)      # On recharge la reference 
+    add     $sp, $sp, 4      # du dernier jump ,
+    jr $ra                   # Retour à l'appelant
+    
 # ----- Fonction addNewLine -----  
 # Objectif : fait un retour a la ligne a l'ecran
 # Registres utilises : $v0, $a0
@@ -138,8 +146,9 @@ addNewLine:
 # Paramètre : $a1 (Ligne en cours : res du modulo + 1)
 
 addLineCount:
-	
-	
+    
+
+
 # ----- Fonction getModulo ----- 
 # Objectif : Fait le modulo (a mod b)
 #   $a0 represente le nombre a (doit etre positif)
