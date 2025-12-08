@@ -9,6 +9,7 @@
 main:
     jal initPartie
     jal displayGrille
+    jal displayLettres
     #jal simulationJeu
     #jal displayGrille
     j   exit 
@@ -96,7 +97,7 @@ displayGrille:
             lb      $a0, ($t2)              # load byte at $t2(adress) in $a0
             li      $v0, 11                 # code pour l'affichage d'un caractère (char)
             syscall
-
+	
             addi    $t1, $t1, 1            # $t1 += 1;
         j boucle_displayGrille
     end_displayGrille:
