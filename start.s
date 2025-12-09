@@ -10,7 +10,6 @@ main:
     #jal initPartie
     jal initGrille
     jal displayGrille
-    jal displayLettres
     #jal simulationJeu
     #jal displayGrille
     j   exit 
@@ -84,29 +83,64 @@ displaySpace:
 # Registres utilises : $t[0-3], $v0, $a[0-1]
 
 displayGrille:
-    add     $sp, $sp, -4        # Sauvegarde de la reference du dernier jump
-    sw      $ra, 0($sp)
-    jal	    displaySpace
-    jal	    displaySpace
-    jal     displayLettres
-    la      $t0, grille     #Charge l'adresse de la grille dans $t0
-    li      $t1, 0          #Initialisation du compteur de boucle dans $t1
-    boucle_displayGrille:
-        bge     $t1, 100, end_displayGrille     # Si $t1 est plus grand ou egal a 100 alors branchement a end_displayGrille
-        
-            add     $t2, $t0, $t1           # $t0 + $t1 -> $t2 ($t0 l'adresse du tableau et $t1 la position dans le tableau)
-            lb      $a0, ($t2)              # load byte at $t2(adress) in $a0
-            li      $v0, 11                 # code pour l'affichage d'un caractère (char)
-            syscall
-	
-            addi    $t1, $t1, 1            # $t1 += 1;
-        j boucle_displayGrille
-    end_displayGrille:
-        jal     addNewLine
-        jal     addLineCount
-        lw      $ra, 0($sp)                 # On recharge la reference 
-        add     $sp, $sp, 4                 # du dernier jump
-    jr $ra
+    add $sp, $sp, -4          # Sauvegarde $ra
+    sw $ra, 0($sp)
+
+    jal displaySpace
+    jal displaySpace
+    jal displayLettres        # Affiche les lettres de colonne (A à J)
+    jal addNewLine            # Retour à la ligne après les lettres
+
+    la $t0, grille            # Charge l'adresse de la grille
+    li $t1, 0                 # Initialise le compteur de boucle
+
+boucle_displayGrille:
+    bge $t1, 100, end_displayGrille
+
+    # Vérifie si on est au début d'une nouvelle ligne (indice multiple de 10)
+    li $t2, 10                # Utilise $t2 pour la division (évite de modifier $a1)
+    div $t1, $t2
+    mfhi $t3                  # Récupère le reste dans $t3 (pas $a1)
+    beqz $t3, nouvelle_ligne  # Si reste = 0, on est au début d'une ligne
+
+    j afficher_caractere
+
+nouvelle_ligne:
+    # Affiche le numéro de ligne
+    mflo $a0                  # Récupère le quotient (numéro de ligne)
+    addi $a0, $a0, 1          # +1 pour obtenir le numéro de ligne (1 à 10)
+    jal addLineCount          # Affiche le numéro de ligne
+    jal displaySpace          # Affiche un espace après le numéro
+
+afficher_caractere:
+    # Affiche le caractère de la grille
+    la $t0, grille            # Recharge $t0 (au cas où il aurait été modifié)
+    add $t4, $t0, $t1         # Utilise $t4 pour l'adresse (pas $t2)
+    lb $a0, ($t4)             # Charge le caractère
+    li $v0, 11
+    syscall
+    jal displaySpace
+
+    # Vérifie si on est à la fin d'une ligne (indice = 9, 19, ..., 99)
+    li $t2, 10
+    addi $t5, $t1, 1          # Utilise $t5 pour éviter de modifier $t1
+    div $t5, $t2
+    mfhi $t5
+    bnez $t5, suite_boucle    # Si reste != 0, on n'est pas à la fin d'une ligne
+
+    # Sinon, on passe à la ligne
+    jal addNewLine
+
+suite_boucle:
+    addi $t1, $t1, 1          # Passe à la case suivante
+    j boucle_displayGrille
+
+end_displayGrille:
+    lw $ra, 0($sp)            # Restaure $ra
+    add $sp, $sp, 4           # Libère la pile
+    jr $ra                    # Retour à l'appelant
+
+
 
 # ----- Fonction displayLettres -----
 # Objectif : Affiche les lettres de A à J
@@ -115,6 +149,7 @@ displayLettres:
     li $t0, 0                 # Initialise l'itérateur à 0
     add     $sp, $sp, -4        # Sauvegarde de la reference du dernier jump
     sw      $ra, 0($sp)
+    jal displaySpace
 
 boucle_alphabet:
     bge $t0, 10, fin_boucle   # Si $t0 >= 10, saute à fin_boucle
@@ -146,7 +181,34 @@ addNewLine:
 # Paramètre : $a1 (Ligne en cours : res du modulo + 1)
 
 addLineCount:
-    
+    add $sp, $sp, -4          # Sauvegarde $ra
+    sw $ra, 0($sp)
+
+    # Affiche le numéro de ligne (1 à 10)
+    li $t0, 10
+    beq $a0, $t0, affiche_dix
+
+    # Pour les lignes 1 à 9
+    move $a2, $a0
+    jal displaySpace
+    move $a0, $a2
+    addi $a0, $a0, 48        # Convertit en ASCII
+    li $v0, 11
+    syscall
+    j fin_addLineCount
+
+affiche_dix:
+    # Affiche '1' puis '0' pour la ligne 10
+    li $a0, 49               # '1'
+    li $v0, 11
+    syscall
+    li $a0, 48               # '0'
+    syscall
+
+fin_addLineCount:
+    lw $ra, 0($sp)           # Restaure $ra
+    add $sp, $sp, 4          # Libère la pile
+    jr $ra                   # Retour à l'appelant
 
 
 # ----- Fonction getModulo ----- 
