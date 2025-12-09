@@ -189,26 +189,26 @@ addLineCount:
     beq $a0, $t0, affiche_dix
 
     # Pour les lignes 1 à 9
-    move $a2, $a0
+    add $sp, $sp, -4          # Sauvegarde $a0
+    sw $a0, 0($sp)
     jal displaySpace
-    move $a0, $a2
-    addi $a0, $a0, 48        # Convertit en ASCII
-    li $v0, 11
-    syscall
+    lw      $a0, 0($sp)      # On récupère la valeur de $a0 
+    add     $sp, $sp, 4      # On dépile
+    li $v0, 1		     # On charge afficher_entier
+    syscall		     # On affiche l'entier contenu dans $a0
     j fin_addLineCount
 
-affiche_dix:
-    # Affiche '1' puis '0' pour la ligne 10
-    li $a0, 49               # '1'
-    li $v0, 11
-    syscall
-    li $a0, 48               # '0'
-    syscall
-
-fin_addLineCount:
-    lw $ra, 0($sp)           # Restaure $ra
-    add $sp, $sp, 4          # Libère la pile
-    jr $ra                   # Retour à l'appelant
+	affiche_dix:
+	    # Affiche '1' puis '0' pour la ligne 10
+	    li $a0, 10               # '1'
+	    li $v0, 1
+	    syscall
+	    
+	    
+	fin_addLineCount:
+    	    lw $ra, 0($sp)           # Restaure $ra
+    	    add $sp, $sp, 4          # Libère la pile
+    	jr $ra                   # Retour à l'appelant
 
 
 # ----- Fonction getModulo ----- 
