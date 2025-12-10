@@ -1,4 +1,4 @@
-# ===== Section donnees =====
+	# ===== Section donnees =====
 .data 
     grille:     .space 100 #Grille de char de 10x10 soit 100 octet
     debug:	.asciiz "debug"
@@ -64,16 +64,16 @@ initGrille:
 
 # ----- Fonction displaySpace -----
 # Objectif : Affiche la grille avec les indicateur de coordonnées
-# Registres utilises :$v0, $a0, $t8
+# Registres utilises :$v0, $a0,
 displaySpace:
 	add     $sp, $sp, -4        # Sauvegarde de la reference du dernier jump
-	sw      $t8, 0($sp)
+	sw      $ra, 0($sp)
 	
 	li $a0, 32	# on charge le charactère a afficher
 	li $v0,11	# on charge la valeur de la fonction afficher_char
 	syscall 	# on utilise afficher_str pour afficher $a0
 	
-	lw $t8,0($sp)
+	lw $ra,0($sp)
 	add $sp,$sp,4
 	jr $ra
 
@@ -94,16 +94,16 @@ displayGrille:
     la $t0, grille            # Charge l'adresse de la grille
     li $t1, 0                 # Initialise le compteur de boucle
 
-boucle_displayGrille:
-    bge $t1, 100, end_displayGrille
+	boucle_displayGrille:
+	    bge $t1, 100, end_displayGrille
+	
+	    # Vérifie si on est au début d'une nouvelle ligne (indice multiple de 10)
+	    li $t2, 10                # Utilise $t2 pour la division (évite de modifier $a1)
+	    div $t1, $t2
+	    mfhi $t3                  # Récupère le reste dans $t3 (pas $a1)
+	    beqz $t3, nouvelle_ligne  # Si reste = 0, on est au début d'une ligne
 
-    # Vérifie si on est au début d'une nouvelle ligne (indice multiple de 10)
-    li $t2, 10                # Utilise $t2 pour la division (évite de modifier $a1)
-    div $t1, $t2
-    mfhi $t3                  # Récupère le reste dans $t3 (pas $a1)
-    beqz $t3, nouvelle_ligne  # Si reste = 0, on est au début d'une ligne
-
-    j afficher_caractere
+   	j afficher_caractere	
 
 nouvelle_ligne:
     # Affiche le numéro de ligne
@@ -278,7 +278,14 @@ setShip:
 # Registres utilises : $v0, $a0, $a1, $s[0-4], $t[0-4]
 
 placeHorizontale:
+	sub     $sp, $sp, 4
+    	sw      $ra, 0($sp)     #On sauvegarde l'adresse de retour
     
+    	
+    
+    
+    	lw      $ra, 0($sp)
+        add     $sp, $sp, 4     # On rétablie l'adresse de retour
 
 # ----- Fontion verifPlaceHorizontale -----
 # Objectif : verifie si le placement (horizontale) est possible.
@@ -289,7 +296,14 @@ placeHorizontale:
 # Registres utilises : $v0, $t[0-4], $s0, $s2, $s3
 
 verifPlaceHorizontale:
-
+	sub     $sp, $sp, 4
+    	sw      $ra, 0($sp)     #On sauvegarde l'adresse de retour
+    
+    	
+    
+    
+    	lw      $ra, 0($sp)
+        add     $sp, $sp, 4     # On rétablie l'adresse de retour
 
 # ----- Fontion placeVerticale -----
 # Objectif : place aléatoirement un bateau de manière verticale.
@@ -297,7 +311,14 @@ verifPlaceHorizontale:
 # Registres utilises : $v0, $a0, $a1, $s[0-4], $t[0-4]
 
 placeVerticale:
-
+	sub     $sp, $sp, 4
+    	sw      $ra, 0($sp)     #On sauvegarde l'adresse de retour
+    
+    	
+    
+    
+    	lw      $ra, 0($sp)
+        add     $sp, $sp, 4     # On rétablie l'adresse de retour
 
 # ----- Fontion verifPlaceVerticale -----
 # Objectif : verifie si le placement (verticale) est possible.
@@ -308,13 +329,28 @@ placeVerticale:
 # Registres utilises : $v0, $t[0-4], $s0, $s2, $s3
 
 verifPlaceVerticale:
-
+	sub     $sp, $sp, 4
+    	sw      $ra, 0($sp)     #On sauvegarde l'adresse de retour
+    
+    	
+    
+    
+    	lw      $ra, 0($sp)
+        add     $sp, $sp, 4     # On rétablie l'adresse de retour
 
 # ----- Fonction simulationJeu -----
 # Objectif : Simule une partie avec une grille déjà généré.
 # Registres utilises : $s[0-3]
 
 simulationJeu:
+	sub     $sp, $sp, 4
+    	sw      $ra, 0($sp)     #On sauvegarde l'adresse de retour
+    
+    	
+    
+    
+    	lw      $ra, 0($sp)
+        add     $sp, $sp, 4     # On rétablie l'adresse de retour
 
 
 # ----- Fontion traque -----     
