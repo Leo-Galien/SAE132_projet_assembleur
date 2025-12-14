@@ -7,15 +7,13 @@
 
 # ----- Main ----- 
 main:
-    #jal initPartie
-    jal initGrille
+    jal initPartie
     jal displayGrille
     #jal simulationJeu
     #jal displayGrille
     j   exit 
 
 # ----- Fonctions -----
-
 # ----- Fonction initPartie -----
 # Objectif : Génère une nouvelle partie à chaque appel
 # Registres utilises : $a0, $a1
@@ -41,10 +39,7 @@ initPartie:
     li  $a1, 68 # 'D' pour Destroyer (Torpilleur)
     jal setShip
 
-    lw      $ra, 0($sp)                 # On recharge la reference 
-    add     $sp, $sp, 4                 # du dernier jump
-    jr $ra
-
+    j retourne
 # ----- Fonction initGrille -----
 # Objectif : Charge la grille avec '.' (Case vide)
 # Registres utilises : $t[0-3]
@@ -73,9 +68,7 @@ displaySpace:
 	li $v0,11	# on charge la valeur de la fonction afficher_char
 	syscall 	# on utilise afficher_str pour afficher $a0
 	
-	lw $ra,0($sp)
-	add $sp,$sp,4
-	jr $ra
+	j retourne
 
 
 # ----- Fonction displayGrille -----
@@ -101,9 +94,7 @@ displayGrille:
         j boucle_displayGrille
     end_displayGrille:
         jal     addNewLine
-        lw      $ra, 0($sp)                 # On recharge la reference 
-        add     $sp, $sp, 4                 # du dernier jump
-    jr $ra
+        j retourne
 
 # ----- Fonction displayLettres -----
 # Objectif : afficher les lettres de A à J
@@ -125,9 +116,7 @@ displayLettres:
 			addi $t0,$t0,1	# on augmente l'iterateur de 1
 			j boucle_alphabet	# on boucle
 	fin_boucle:	
-	lw      $ra, 0($sp)                 # On recharge la reference 
-        add     $sp, $sp, 4                 # du dernier jump
-		jr $ra
+	j retourne
 # ----- Fonction addNewLine -----  
 # Objectif : fait un retour a la ligne a l'ecran
 # Registres utilises : $v0, $a0
@@ -140,10 +129,7 @@ addNewLine:
     li      $a0, 10         # Chargement chaine à afficher -> '\n'
     syscall
     
-    lw      $ra, 0($sp)                 # On recharge la reference 
-    add     $sp, $sp, 4                 # du dernier jump
-    jr      $ra             # Retour à la fonction précendente
-
+    j retourne
 # ----- Fonction addLineCount -----
 # Objectif : affiche le numéro de la ligne
 # Registres utilises : $v0, $a0, $a1
@@ -176,9 +162,7 @@ addLineCount:
     	j finCount
     	
     	finCount:
-    		lw      $ra, 0($sp)                 # On recharge la reference 
-    		add     $sp, $sp, 4                 # du dernier jump
-    	jr      $ra             # Retour à la fonction précendente
+    		j retourne
 	
 # ----- Fonction getModulo ----- 
 # Objectif : Fait le modulo (a mod b)
@@ -199,9 +183,7 @@ getModulo:
         j boucle_getModulo
     end_getModulo:
     move    $v0, $a0
-    lw      $ra, 0($sp)
-    add     $sp, $sp, 4
-    jr $ra
+    j retourne
 
 
 # ----- Fonction getAleatoire ----- 
@@ -223,10 +205,10 @@ getAleatoire:
 
 setShip:
     sub     $sp, $sp, 4
-    sw      $ra, 0($sp)     #On sauvegarde l'adresse de retour
+    sw      $ra, 0($sp)     	#On sauvegarde l'adresse de retour
 
-    move 	$s0, $a0		# On recopie la taille dans $s0
-    move    $s4, $a1        # On recopie le caractère du bateau
+    move 	$s0, $a0	# On recopie la taille dans $s0
+    move    $s4, $a1        	# On recopie le caractère du bateau
     try_setShip:
         #Choix de l'axe (horizontale ou verticale)
         li      $a1, 2          # Définition de la borne surpérieur (Resultat possbile : 0 ou 1)
@@ -237,17 +219,56 @@ setShip:
         j       placeHorizontale        # Si la valuer est 0 alors le bateau sera placer horizontalement
 
     end_setShip:
+        j retourne
+        
+
+        
+        
+# ----- Fontion  -----
+# Objectif : dépile $rs et retourne  a l'adresse dépilée ( utilisé a la fin d'une fonction pour retourner a l'adresse d'appel en une ligne au lieu de 3).
+retourne:
         lw      $ra, 0($sp)
         add     $sp, $sp, 4     # On rétablie l'adresse de retour
     jr $ra
-        
 # ----- Fontion placeHorizontale -----
 # Objectif : place aléatoirement un bateau de manière horizontale.
-#   Prends les paramètres de setShip
+#   Prends les paramètres de setShip 
 # Registres utilises : $v0, $a0, $a1, $s[0-4], $t[0-4]
 
 placeHorizontale:
-    
+	sub $sp,$sp,4
+	sw  $t1,0($sp)		# on sauvegarde la valeur de $t1 car deja utilisé dans la fonctio qui appelle celle ci
+
+
+    	
+    	li $a1,5		# on charge la borne superieur de getaleatoire
+	jal getAleatoire	# on génère le n° de la ligne du bateau
+	move $s2,$a0		# on stocke la ligne du bateau dans $s2
+	li $a1,5		# on charge la borne superieur de getaleatoire (on veut pas plus que 9 car le plus petit bateau fait 2 de long donc si la colone générée est 10 la suite du bateu est systèmatiquement hors ligne) 
+	jal getAleatoire	# on génère le n° de la colone du bateau
+	move $s3,$a0		# on stocke la colone du bateau dans $s3
+	
+	jal verifPlaceHorizontale	# vérifie si on peut placer le bato
+	beqz $v0,placeHValide		# si on peut placer le bato on le place (incroyable)
+		j finPlaceH		# sinon on le place pas et on finis placeHorizontale
+	placeHValide:
+		li $t1, 0		#initialise un compteur a 0
+		mul $t1,$s2,10		# amène notre compteur sur la ligne de départ
+		add  $t1,$t1,$s3   	# amène notre compteur sur la colonne de départ
+		move $t3, $s0      	# taille
+		mul  $t3, $t3, 1
+		add  $t3, $t3, $t1	 # borne finale		
+	bouclePlaceH:
+		bge $t1,$t3,finPlaceH		#tant qu'on a pas finis de placer le bateau on boucle sinon on finis placeHorizontale
+			la	$t0,grille	# charge l'adresse de la grille 
+			add     $t2, $t0, $t1   # $t0 + $t1 -> $t2 ($t0 l'adresse du tableau et $t1 la position dans le tableau)
+        		sb	$s4, 0($t2)		# On place le charactère contenu dans $s4 à l'adresse contenue dans $t2
+        		addi    $t1, $t1, 1     # $t1 += 1 (On augemente le compteur et on passe au charactère de droite)
+        	j bouclePlaceH
+        finPlaceH:
+        	lw $t1,0($sp)	# on récupère la valeur $t1 sauvegardée au début de la fonction
+        	add $sp,$sp,4
+    		j end_setShip	# on finis setship
 
 # ----- Fontion verifPlaceHorizontale -----
 # Objectif : verifie si le placement (horizontale) est possible.
@@ -259,6 +280,17 @@ placeHorizontale:
 
 verifPlaceHorizontale:
 
+# MODIF DE VERTICALE PAS SUR
+	sub     $sp, $sp, 4
+        sw      $ra, 0($sp)     #On sauvegarde l'adresse de retour
+
+       	li $v0,0
+            
+            
+            
+        j retourne
+
+
 
 # ----- Fontion placeVerticale -----
 # Objectif : place aléatoirement un bateau de manière verticale.
@@ -266,6 +298,39 @@ verifPlaceHorizontale:
 # Registres utilises : $v0, $a0, $a1, $s[0-4], $t[0-4]
 
 placeVerticale:
+	sub     $sp, $sp, 4
+    	sw      $t1, 0($sp)     #On sauvegarde la valeur de $t1 car deja utilisé dans la fonctio qui appelle celle ci
+	
+    	li $t1, 0		#initialise un compteur a 0
+    	
+    	li $a1,5		# on charge la borne superieur de getaleatoire
+	jal getAleatoire	# on génère le n° de la colone du bateau
+	move $s3,$a0		# on stocke la colone du bateau dans $s3
+	li $a1,5		# on charge la borne superieur de getaleatoire (on veut pas plus que 9 car le plus petit bateau fait 2 de long donc si la ligne générée est 10 la suite du bateu est systèmatiquement hors ligne) 
+	jal getAleatoire	# on génère le n° de la colone du bateau
+	move $s2,$a0		# on stocke la ligne du bateau dans $s3
+		
+	jal verifPlaceVerticale	# vérifie si on peut placer le bato
+	beqz $v0,placeVValide		# si on peut placer le bato on le place (incroyable)
+		j finPlaceV		# sinon on le place pas et on finis placeHorizontale
+	placeVValide:
+		li $t1, 0		#initialise un compteur a 0
+		mul $t1,$s2,10		# amène notre compteur sur la bonne ligne
+		add  $t1,$t1,$s3   	# amène notre compteur sur la colonne de départ
+		move $t3, $s0      	# taille
+		mul  $t3, $t3, 10
+		add  $t3, $t3, $t1 	# borne finale
+	bouclePlaceV:
+		bge $t1,$t3,finPlaceV		#tant qu'on a pas finis de placer le bateau on boucle sinon on finis placeHorizontale
+			la	$t0,grille	# charge l'adresse de la grille 
+			add     $t2, $t0, $t1   # $t0 + $t1 -> $t2 ($t0 l'adresse du tableau et $t1 la position dans le tableau)
+        		sb	$s4, 0($t2)		# On place le charactère contenu dans $s4 à l'adresse contenue dans $t2
+        		addi    $t1, $t1, 10     # $t1 += 1 (On augemente le compteur et on passe au charactère de dessous)
+        	j bouclePlaceV
+        finPlaceV:
+        	lw $t1,0($sp)	# on récupère la valeur $t1 sauvegardée au début de la fonction
+        	add $sp,$sp,4
+    		j end_setShip	# on finis setship
 
 
 # ----- Fontion verifPlaceVerticale -----
@@ -277,31 +342,15 @@ placeVerticale:
 # Registres utilises : $v0, $t[0-4], $s0, $s2, $s3
 
 verifPlaceVerticale:
-    sub     $sp, $sp, 4
+    	sub     $sp, $sp, 4
         sw      $ra, 0($sp)     #On sauvegarde l'adresse de retour
 
-        li $t0, 11              # Condition de non-sortie de la grille
-        add $t1, $s2, $s0       # Ajoute la longueur du bateau à la position pour vérifier la position de la fin du bateau
-
-        verifLigne:
-            bgt     $s2, $t0, pasBon # On vérifie si la position du bateau en lignes est supérieure à 10, si c'est le cas on branche à pasBon
-            bgt     $t1, $t0, pasBon # On vérifie si la position de la fin du bateau en lignes est supérieure à 10, si c'est le cas on branche à pasBon
-
-        verifColonnes:
-                bgt     $s3, $t0, pasBon # On vérifie si la position du bateau (sans la taille vu que c'est placeVerticale il fera forcément que 1 de longueur) en colonnes, si c'est le cas on branche à pasBon
-
-        	Bon:			 # cette étiquette sert a rien a part a clarifier le cas dans lequel on est
-               		li $v0, 0 #Si c'est bon on retourne 0
-                	j vPHexit # On arrête sans lire la suite
-
-        pasBon:
-            li $v0, 1 #Si c'est pasBon on retourne 1
-            j  vPHexit #On arrête sans lire la suite
-
-        vPHexit:
-            lw      $ra, 0($sp)
-            add     $sp, $sp, 4     # On rétablit l'adresse de retour
-            jr $ra # On retourne à la fonction précédente
+       	li $v0,0
+           
+        
+        j retourne
+            
+        
 
 
 # ----- Fonction simulationJeu -----
@@ -309,14 +358,14 @@ verifPlaceVerticale:
 # Registres utilises : $s[0-3]
 
 simulationJeu:
-
+	jr $ra
 
 # ----- Fontion traque -----     
 # Objectif : Vérifie la présence d'un navire et le traque de manière récursive
 # Registres utilises : $t[8-9], $s[0-3]
 
 traque:
-
+	jr $ra
 
 exit: 
     li $v0, 10  #Chargement appel systeme 10 (Sortie)
