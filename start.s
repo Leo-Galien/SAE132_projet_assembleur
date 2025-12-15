@@ -241,10 +241,10 @@ placeHorizontale:
 
 
     	
-    	li $a1,5		# on charge la borne superieur de getaleatoire
+    	li $a1,10		# on charge la borne superieur de getaleatoire
 	jal getAleatoire	# on génère le n° de la ligne du bateau
 	move $s2,$a0		# on stocke la ligne du bateau dans $s2
-	li $a1,5		# on charge la borne superieur de getaleatoire (on veut pas plus que 9 car le plus petit bateau fait 2 de long donc si la colone générée est 10 la suite du bateu est systèmatiquement hors ligne) 
+	li $a1,9		# on charge la borne superieur de getaleatoire (on veut pas plus que 9 car le plus petit bateau fait 2 de long donc si la colone générée est 10 la suite du bateu est systèmatiquement hors ligne) 
 	jal getAleatoire	# on génère le n° de la colone du bateau
 	move $s3,$a0		# on stocke la colone du bateau dans $s3
 	
@@ -280,11 +280,27 @@ placeHorizontale:
 
 verifPlaceHorizontale:
 
-# MODIF DE VERTICALE PAS SUR
+	# VERIFIE PAS QUE CA SE SUPERPOSE PAS AVEC UN AUTRE ABTO , A COMPLETER
+	
 	sub     $sp, $sp, 4
         sw      $ra, 0($sp)     #On sauvegarde l'adresse de retour
 
-       	li $v0,0
+	li $t3, 0		#initialise un compteur a 0
+	add $t3,$t3,$s3   	# amène notre compteur sur la colonne de départ
+	add $t4,$s0,$t3		# assigne la borne aux coordonées de la fin du bato
+	boucleTestPH:
+		bge $t3,$t4,PH_possible		# teste chaque case du bato , puis branch a PV_possibe si la boucle n'est pas interrompue
+			bge $t3,10,PH_impossible	# si la case en train d'être testée sort de la la grille, alors on branch a PV_impossible
+				add $t3,$t3,1		# passe a la case du bateau suivante ( on ajoute 10 car on change de ligne mais pas de colone)
+				j boucleTestPH
+			
+
+	PH_impossible:
+		li $v0,1	 #charge la valeur correspondant au retour de la fonction , ici un car le bato ne peut pas être placé
+		j retourne
+		     	           
+        PH_possible :
+               	li $v0,0	#charge la valeur correspondant au retour de la fonction , ici zero car le bato peut être placé
             
             
             
@@ -298,15 +314,18 @@ verifPlaceHorizontale:
 # Registres utilises : $v0, $a0, $a1, $s[0-4], $t[0-4]
 
 placeVerticale:
+
+
+
 	sub     $sp, $sp, 4
     	sw      $t1, 0($sp)     #On sauvegarde la valeur de $t1 car deja utilisé dans la fonctio qui appelle celle ci
 	
     	li $t1, 0		#initialise un compteur a 0
     	
-    	li $a1,5		# on charge la borne superieur de getaleatoire
+    	li $a1,10		# on charge la borne superieur de getaleatoire
 	jal getAleatoire	# on génère le n° de la colone du bateau
 	move $s3,$a0		# on stocke la colone du bateau dans $s3
-	li $a1,5		# on charge la borne superieur de getaleatoire (on veut pas plus que 9 car le plus petit bateau fait 2 de long donc si la ligne générée est 10 la suite du bateu est systèmatiquement hors ligne) 
+	li $a1,9		# on charge la borne superieur de getaleatoire (on veut pas plus que 9 car le plus petit bateau fait 2 de long donc si la ligne générée est 10 la suite du bateu est systèmatiquement hors ligne) 
 	jal getAleatoire	# on génère le n° de la colone du bateau
 	move $s2,$a0		# on stocke la ligne du bateau dans $s3
 		
@@ -320,13 +339,13 @@ placeVerticale:
 		move $t3, $s0      	# taille
 		mul  $t3, $t3, 10
 		add  $t3, $t3, $t1 	# borne finale
-	bouclePlaceV:
-		bge $t1,$t3,finPlaceV		#tant qu'on a pas finis de placer le bateau on boucle sinon on finis placeHorizontale
-			la	$t0,grille	# charge l'adresse de la grille 
-			add     $t2, $t0, $t1   # $t0 + $t1 -> $t2 ($t0 l'adresse du tableau et $t1 la position dans le tableau)
-        		sb	$s4, 0($t2)		# On place le charactère contenu dans $s4 à l'adresse contenue dans $t2
-        		addi    $t1, $t1, 10     # $t1 += 1 (On augemente le compteur et on passe au charactère de dessous)
-        	j bouclePlaceV
+		bouclePlaceV:
+			bge $t1,$t3,finPlaceV		#tant qu'on a pas finis de placer le bateau on boucle sinon on finis placeHorizontale
+				la	$t0,grille	# charge l'adresse de la grille 
+				add     $t2, $t0, $t1   # $t0 + $t1 -> $t2 ($t0 l'adresse du tableau et $t1 la position dans le tableau)
+        			sb	$s4, 0($t2)		# On place le charactère contenu dans $s4 à l'adresse contenue dans $t2
+        			addi    $t1, $t1, 10     # $t1 += 1 (On augemente le compteur et on passe au charactère de dessous)
+        		j bouclePlaceV
         finPlaceV:
         	lw $t1,0($sp)	# on récupère la valeur $t1 sauvegardée au début de la fonction
         	add $sp,$sp,4
@@ -342,13 +361,32 @@ placeVerticale:
 # Registres utilises : $v0, $t[0-4], $s0, $s2, $s3
 
 verifPlaceVerticale:
+
+	# VERIFIE PAS QUE CA SE SUPERPOSE PAS AVEC UN AUTRE ABTO , A COMPLETER
+
     	sub     $sp, $sp, 4
         sw      $ra, 0($sp)     #On sauvegarde l'adresse de retour
 
-       	li $v0,0
-           
-        
-        j retourne
+	li $t3, 0		#initialise un compteur a 0
+	mul $t3,$s2,10		# amène notre compteur sur la ligne de départ
+	add $t3,$t3,$s3   	# amène notre compteur sur la colonne de départ
+	li $t4,0		# v
+	mul $t4,$s0,10		# assigne la borne aux coordonées de la fin du bato
+	add $t4,$t4,$t3		# ^
+	boucleTestPV:
+		bge $t3,$t4,PV_possible		# teste chaque case du bato , puis branch a PV_possibe si la boucle n'est pas interrompue
+			bge $t3,100,PV_impossible	# si la case en train d'être testée sort de la la grille, alors on branch a PV_impossible
+				add $t3,$t3,10		# passe a la case du bateau suivante ( on ajoute 10 car on change de ligne mais pas de colone)
+				j boucleTestPV
+			
+
+	PV_impossible:
+		li $v0,1	 #charge la valeur correspondant au retour de la fonction , ici un car le bato ne peut pas être placé
+		j retourne
+		     	           
+        PV_possible :
+               	li $v0,0	#charge la valeur correspondant au retour de la fonction , ici zero car le bato peut être placé
+        	j retourne
             
         
 
