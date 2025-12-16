@@ -288,29 +288,35 @@ verifPlaceHorizontale:
 	li $t3, 0		#initialise un compteur a 0
 	add $t3,$t3,$s3   	# amène notre compteur sur la colonne de départ
 	add $t4,$s0,$t3		# assigne la borne aux coordonées de la fin du bato
-	boucleTestPH:
-		bge $t3,$t4,PH_possible		# teste chaque case du bato , puis branch a PV_possibe si la boucle n'est pas interrompue
+
+	boucleTestPHGrille:
+		bge $t3,$t4,TestPHBato			# teste chaque case du bato , puis branch a boucleTestPHBato si la boucle n'est pas interrompue
 			bge $t3,10,PH_impossible	# si la case en train d'être testée sort de la la grille, alors on branch a PV_impossible
-				la	$t0,grille	# charge l'adresse de la grille 
+				add $t3,$t3,1		# passe a la case du bateau suivante
+				j boucleTestPHGrille
+			
+	TestPHBato:
+		la $t0,grille		# charge l'adresse de la grille 
+		li $t3, 0		#reinitialise la boucle
+		mul $t3,$s2,10		# amène notre compteur sur la ligne de départ
+		add $t3,$t3,$s3		# amène notre compteur sur la colonne de départ
+		add $t4,$s0,$t3		# assigne la borne aux coordonées de la fin du bato
+	boucleTestPHBato:
+		bge $t3,$t4,PH_possible		# teste chaque case du bato , puis branch a PH_possible si la boucle n'est pas interrompue
 				add     $t2, $t0, $t3   # $t0 + $t3 -> $t2 ($t0 l'adresse du tableau et $t3 la position dans le tableau)
         			lb	$t5, 0($t2)	# On place le charactère contenu à l'adresse $t2 dans $t5 
         			li 	$t6,46		#"."
         			bne 	$t5,$t6,PV_impossible	#si l'espace de la grille en train d'être verifié est pas un point,c'est un autre bato donc le placement est invalide
-			
-				add $t3,$t3,1		# passe a la case du bateau suivante ( on ajoute 10 car on change de ligne mais pas de colone)
-				j boucleTestPH
-			
-
+					add $t3,$t3,1		# passe a la case du bateau suivante
+					j boucleTestPHBato
+	
 	PH_impossible:
 		li $v0,1	 #charge la valeur correspondant au retour de la fonction , ici un car le bato ne peut pas être placé
 		j retourne
 		     	           
         PH_possible :
                	li $v0,0	#charge la valeur correspondant au retour de la fonction , ici zero car le bato peut être placé
-            
-            
-            
-        j retourne
+               	j retourne
 
 
 
