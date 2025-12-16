@@ -1,7 +1,6 @@
 # ===== Section donnees =====
 .data 
     grille:     .space 100 #Grille de char de 10x10 soit 100 octet
-    debug:	.asciiz "debug"
 # ===== Section code =====  
 .text
 
@@ -216,7 +215,7 @@ setShip:
         move 	$s1, $a0		# On copie le résultat dans $s1
         # Placement en fonction de l'axe
         beq     $s1, 1, placeVerticale  # Si la valuer est 1 alors le bateau sera placer verticalement
-        j       placeHorizontale        # Si la valuer est 0 alors le bateau sera placer horizontalement
+        	j       placeHorizontale        # Si la valuer est 0 alors le bateau sera placer horizontalement
 
     end_setShip:
         j retourne
@@ -250,7 +249,8 @@ placeHorizontale:
 	
 	jal verifPlaceHorizontale	# vérifie si on peut placer le bato
 	beqz $v0,placeHValide		# si on peut placer le bato on le place (incroyable)
-		j finPlaceH		# sinon on le place pas et on finis placeHorizontale
+	        add     $sp, $sp, 4     # On dépile car on a plus besoin l'adresse de retour de placeH (on retourne dans setship)
+		j try_setShip		# sinon on place pas le bato et on reesaye de le placer
 	placeHValide:
 		li $t1, 0		#initialise un compteur a 0
 		mul $t1,$s2,10		# amène notre compteur sur la ligne de départ
@@ -291,6 +291,12 @@ verifPlaceHorizontale:
 	boucleTestPH:
 		bge $t3,$t4,PH_possible		# teste chaque case du bato , puis branch a PV_possibe si la boucle n'est pas interrompue
 			bge $t3,10,PH_impossible	# si la case en train d'être testée sort de la la grille, alors on branch a PV_impossible
+				la	$t0,grille	# charge l'adresse de la grille 
+				add     $t2, $t0, $t3   # $t0 + $t3 -> $t2 ($t0 l'adresse du tableau et $t3 la position dans le tableau)
+        			lb	$t5, 0($t2)	# On place le charactère contenu à l'adresse $t2 dans $t5 
+        			li 	$t6,46		#"."
+        			bne 	$t5,$t6,PV_impossible	#si l'espace de la grille en train d'être verifié est pas un point,c'est un autre bato donc le placement est invalide
+			
 				add $t3,$t3,1		# passe a la case du bateau suivante ( on ajoute 10 car on change de ligne mais pas de colone)
 				j boucleTestPH
 			
@@ -331,7 +337,8 @@ placeVerticale:
 		
 	jal verifPlaceVerticale	# vérifie si on peut placer le bato
 	beqz $v0,placeVValide		# si on peut placer le bato on le place (incroyable)
-		j finPlaceV		# sinon on le place pas et on finis placeHorizontale
+		add     $sp, $sp, 4     # On dépile car on a plus besoin l'adresse de retour de placeV (on retourne dans setship)
+		j try_setShip		# sinon on place pas le bato et on reesaye de le placer
 	placeVValide:
 		li $t1, 0		#initialise un compteur a 0
 		mul $t1,$s2,10		# amène notre compteur sur la bonne ligne
@@ -358,7 +365,7 @@ placeVerticale:
 #   $s2 contient la ligne 
 #   $s3 contient la colonne
 # Retourne 0 si placement ok, 1 sinon
-# Registres utilises : $v0, $t[0-4], $s0, $s2, $s3
+# Registres utilises : $v0, $t[0-5], $s0, $s2, $s3,$4
 
 verifPlaceVerticale:
 
@@ -376,7 +383,13 @@ verifPlaceVerticale:
 	boucleTestPV:
 		bge $t3,$t4,PV_possible		# teste chaque case du bato , puis branch a PV_possibe si la boucle n'est pas interrompue
 			bge $t3,100,PV_impossible	# si la case en train d'être testée sort de la la grille, alors on branch a PV_impossible
-				add $t3,$t3,10		# passe a la case du bateau suivante ( on ajoute 10 car on change de ligne mais pas de colone)
+				la	$t0,grille	# charge l'adresse de la grille 
+				add     $t2, $t0, $t3   # $t0 + $t3 -> $t2 ($t0 l'adresse du tableau et $t3 la position dans le tableau)
+        			lb	$t5, 0($t2)	# On place le charactère contenu à l'adresse $t2 dans $t5 
+        			li 	$t6,46		#"."
+        			bne 	$t5,$t6,PV_impossible	#si l'espace de la grille en train d'être verifié est pas un point,c'est un autre bato donc le placement est invalide
+        			
+       				add $t3,$t3,10		# passe a la case du bateau suivante ( on ajoute 10 car on change de ligne mais pas de colone)
 				j boucleTestPV
 			
 
