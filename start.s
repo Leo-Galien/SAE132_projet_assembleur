@@ -61,7 +61,7 @@ initGrille:
 
 # ----- Fonction displaySpace -----
 # Objectif : Affiche la grille avec les indicateur de coordonnées
-# Registres utilises :$v0, $a0, $t8
+# Registres utilises :$v0, $a0
 displaySpace:
 	add     $sp, $sp, -4        # Sauvegarde de la reference du dernier jump
 	sw      $ra, 0($sp)
@@ -75,7 +75,7 @@ displaySpace:
 
 # ----- Fonction displayGrille -----
 # Objectif : Affiche la grille avec les indicateur de coordonnées
-# Registres utilises : $t[0-3], $v0, $a[0-1]
+# Registres utilises : $t[0-2], $v0, $a0
 
 displayGrille:
     add     $sp, $sp, -4        # Sauvegarde de la reference du dernier jump
@@ -135,7 +135,7 @@ addNewLine:
 # ----- Fonction addLineCount -----
 # Objectif : affiche le numéro de la ligne
 # Registres utilises : $v0, $a0, $a1
-# Paramètre : $a1 (Ligne en cours : res du modulo + 1)
+# Paramètre : $a[0-1],$v[0-1]
 
 addLineCount:
 	add     $sp, $sp, -4       	# Sauvegarde de la reference du dernier jump
@@ -203,7 +203,7 @@ getAleatoire:
 # Objectif : place un bateau de taille donné.
 #   $a0 represente la taille en nombre de case du bateau à placer
 #   $a1 represente le caractère pour représenter le bateau
-# Registres utilises : $a0, $a1, $s[0-4], $t[0-4]
+# Registres utilises : $a[0-1], $s[0-4],
 
 setShip:
     sub     $sp, $sp, 4
@@ -223,19 +223,17 @@ setShip:
     end_setShip:
         j retourne
         
-
-        
-        
 # ----- Fontion  -----
-# Objectif : dépile $rs et retourne  a l'adresse dépilée ( utilisé a la fin d'une fonction pour retourner a l'adresse d'appel en une ligne au lieu de 3).
+# Objectif : dépile $sp et retourne  a l'adresse dépilée ( utilisé a la fin d'une fonction pour retourner a l'adresse d'appel en une ligne au lieu de 3).
 retourne:
         lw      $ra, 0($sp)
         add     $sp, $sp, 4     # On rétablie l'adresse de retour
     jr $ra
+    
 # ----- Fontion placeHorizontale -----
 # Objectif : place aléatoirement un bateau de manière horizontale.
 #   Prends les paramètres de setShip 
-# Registres utilises : $v0, $a0, $a1, $s[0-4], $t[0-4]
+# Registres utilises : $v0, $a1, $s[0-4], $t[0-3]
 
 placeHorizontale:
 	sub $sp,$sp,4
@@ -279,7 +277,7 @@ placeHorizontale:
 #   $s2 contient la ligne 
 #   $s3 contient la colonne
 # Retourne 0 si placement ok, 1 sinon
-# Registres utilises : $v0, $t[0-4], $s0, $s2, $s3
+# Registres utilises : $v0, $t[0-6], $s0, $s2, $s3
 
 verifPlaceHorizontale:
 	
@@ -324,7 +322,7 @@ verifPlaceHorizontale:
 # ----- Fontion placeVerticale -----
 # Objectif : place aléatoirement un bateau de manière verticale.
 #   Prends les paramètres de setShip
-# Registres utilises : $v0, $a0, $a1, $s[0-4], $t[0-4]
+# Registres utilises : $v0,$a1, $s[0-4], $t[0-3]
 
 placeVerticale:
 
@@ -370,7 +368,7 @@ placeVerticale:
 #   $s2 contient la ligne 
 #   $s3 contient la colonne
 # Retourne 0 si placement ok, 1 sinon
-# Registres utilises : $v0, $t[0-5], $s0, $s2, $s3,$4
+# Registres utilises : $v0,$t[0-6],$s0,$s2,$s3
 
 verifPlaceVerticale:
 
@@ -409,7 +407,7 @@ verifPlaceVerticale:
 
 # ----- Fonction simulationJeu -----
 # Objectif : Simule une partie avec une grille déjà généré.
-# Registres utilises : $s[0-3]
+# Registres utilises : $s[0-3],$t[3-4],$a1
 
 simulationJeu:
 	la $s0,grille	# charge l'adresse de la grille dans $s0
@@ -432,7 +430,7 @@ simulationJeu:
 
 # ----- Fontion traque -----     
 # Objectif : Vérifie la présence d'un navire et le traque de manière récursive
-# Registres utilises : $t[7-9], $s[0-3]
+# Registres utilises : $s[0-2],$t[0-1],$t[3-4],
 traque:
     	addi $sp, $sp, -20            	# Réserve 20 octets sur la pile
     	sw   $ra, 16($sp)             	# Sauvegarde l'adresse de retour
