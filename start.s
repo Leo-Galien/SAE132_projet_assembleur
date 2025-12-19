@@ -1,13 +1,16 @@
 # ===== Section donnees =====
 .data 
     grille:     .space 100 #Grille de char de 10x10 soit 100 octet
+    nb_coup: 	.word 0
+    nb_coup_but:	.word 0
 # ===== Section code =====  
 .text
 
 # ----- Main ----- 
 main:
     jal initPartie
-    jal displayGrille
+    #jal displayGrille
+    jal simulationJeu
     #jal simulationJeu
     #jal displayGrille
     j   exit 
@@ -279,8 +282,6 @@ placeHorizontale:
 # Registres utilises : $v0, $t[0-4], $s0, $s2, $s3
 
 verifPlaceHorizontale:
-
-	# VERIFIE PAS QUE CA SE SUPERPOSE PAS AVEC UN AUTRE ABTO , A COMPLETER
 	
 	sub     $sp, $sp, 4
         sw      $ra, 0($sp)     #On sauvegarde l'adresse de retour
@@ -327,8 +328,6 @@ verifPlaceHorizontale:
 
 placeVerticale:
 
-
-
 	sub     $sp, $sp, 4
     	sw      $t1, 0($sp)     #On sauvegarde la valeur de $t1 car deja utilisé dans la fonctio qui appelle celle ci
 	
@@ -337,9 +336,9 @@ placeVerticale:
     	li $a1,10		# on charge la borne superieur de getaleatoire
 	jal getAleatoire	# on génère le n° de la colone du bateau
 	move $s3,$a0		# on stocke la colone du bateau dans $s3
-	li $a1,9		# on charge la borne superieur de getaleatoire (on veut pas plus que 9 car le plus petit bateau fait 2 de long donc si la ligne générée est 10 la suite du bateu est systèmatiquement hors ligne) 
+	li $a1,10		# on charge la borne superieur de getaleatoire 
 	jal getAleatoire	# on génère le n° de la colone du bateau
-	move $s2,$a0		# on stocke la ligne du bateau dans $s3
+	move $s2,$a0		# on stocke la ligne du bateau dans $s2
 		
 	jal verifPlaceVerticale	# vérifie si on peut placer le bato
 	beqz $v0,placeVValide		# si on peut placer le bato on le place (incroyable)
@@ -374,8 +373,6 @@ placeVerticale:
 # Registres utilises : $v0, $t[0-5], $s0, $s2, $s3,$4
 
 verifPlaceVerticale:
-
-	# VERIFIE PAS QUE CA SE SUPERPOSE PAS AVEC UN AUTRE ABTO , A COMPLETER
 
     	sub     $sp, $sp, 4
         sw      $ra, 0($sp)     #On sauvegarde l'adresse de retour
@@ -415,15 +412,91 @@ verifPlaceVerticale:
 # Registres utilises : $s[0-3]
 
 simulationJeu:
-	jr $ra
+	la $s0,grille	# charge l'adresse de la grille dans $s0
+	li $t3,0	# initialise le compteur de coups
+	li $t4,0 	# initialise le compteur de coups touchés
+	
+	boucleTir:	
+		bge $t4,17,finSimu	# si on a touché 17 fois, tous les bateaux sont coulés donc le jeu est finis 
+			li $a1,10		# on charge la borne superieur de getaleatoire
+			jal getAleatoire	# on génère une colonne cible
+			move $s2,$a0		# on stocke la colone cible dans $s2
+			li $a1,10		# on charge la borne superieur de getaleatoire (on veut pas plus que 9 car le plus petit bateau fait 2 de long donc si la ligne générée est 10 la suite du bateu est systèmatiquement hors ligne) 
+			jal getAleatoire	# on génère le n° de la colone du bateau
+			move $s1,$a0		# on stocke la ligne du bateau dans $s1
+			jal traque
+		j boucleTir
+	
+	finSimu:
+		jr $ra
 
 # ----- Fontion traque -----     
 # Objectif : Vérifie la présence d'un navire et le traque de manière récursive
-# Registres utilises : $t[8-9], $s[0-3]
-
+# Registres utilises : $t[7-9], $s[0-3]
 traque:
-	jr $ra
-
+    	addi $sp, $sp, -20            	# Réserve 20 octets sur la pile
+    	sw   $ra, 16($sp)             	# Sauvegarde l'adresse de retour
+    	sw   $s1, 12($sp)             	# Sauvegarde la ligne
+    	sw   $s2, 8($sp)              	# Sauvegarde la colonne
+    	sw   $t0, 4($sp)            	# Sauvegarde registres temporaires
+    	sw   $t1, 0($sp)
+	
+	mul $t0,$s1,10			# ammène $t0 a la ligne ciblée
+	add $t0,$t0,$s2			# ammène $t0 a la colonne ciblée
+	add $t0,$t0,$s0			# assigne a $t0 l'adresse de la case ciblée
+	lb $t1,0($t0)			# assigne a $t1 la valeur de la case cilée
+	beq $t1,126,finTraque		# si la case contiens '~' , on est sur une case déja tirée donc on finis la traque
+		beq $t1,88,finTraque	# si la case contiens 'X' , on est sur une case déja tirée donc on finis la traque
+			add $t3,$t3,1	# la case n'est pas une case déja tirée donc on augmente le compteur de coups tirés
+			beq $t1,46,rate	# si la case contiens '.' , on a raté notre tir donc on branch a "rate"
+				add $t4,$t4,1	# la case contiens un bateau donc on augmente le compteur de coups touchés
+				li $t1,88		# charge 'X' dans $t1
+				sb $t1,0($t0)		# met la valeur de la case cible a 'X' car on viens de toucher un bateau
+				jal displayGrille	# affiche la grille après le changement
+				
+	traqueDessus:			# on traque la case du dessus 
+		beqz $s1,traqueDroite	#si on est sur la 1ere ligne on peut pas regarder au dessus donc on skip
+			sub $s1,$s1,1
+			jal traque
+			add $s1,$s1,1
+		j traqueDroite
+	traqueDroite:			# on traque la case de droite
+		beq $s2,9,traqueDessous	#si on est sur la dernière colonne on peut pas regarder a droite donc on skip
+			add $s2,$s2,1
+			jal traque
+			sub $s2,$s2,1
+		j traqueDessous
+	
+	traqueDessous:			# on traque la case du desous
+		beq $s1,9,traqueGauche	#si on est sur la dernière ligne on peut pas regarder en dessous donc on skip
+			add $s1,$s1,1
+			jal traque
+			sub $s1,$s1,1
+		j traqueGauche
+		
+	
+	traqueGauche:			# on traque la case de gauche
+		beq $s2,0,finTraque	#si on est sur la première colonne on peut pas regarder a gauche donc on skip
+			sub $s2,$s2,1
+			jal traque
+			add $s2,$s2,1
+		j finTraque
+		
+		
+				
+	rate: 
+		li $t1,126		# charge '~' dans $t1
+		sb $t1,0($t0)		# met la valeur de la case cible a '~'
+		jal displayGrille	# affiche la grille après le changement
+	j finTraque
+	finTraque:
+		lw   $t1, 0($sp)              # Restaure registres temporaires
+    		lw   $t0, 4($sp)
+    		lw   $s2, 8($sp)              # Restaure paramètres
+    		lw   $s1, 12($sp)
+    		lw   $ra, 16($sp)             # Restaure l'adresse de retour
+    		addi $sp, $sp, 20             # Libère la pile
+    	jr   $ra                      # Retour à l'appelant
 exit: 
     li $v0, 10  #Chargement appel systeme 10 (Sortie)
     syscall
